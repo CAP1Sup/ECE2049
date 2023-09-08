@@ -21,7 +21,7 @@ void main(void)
 {
     unsigned char currKey=0, dispSz = 3;
     unsigned char dispThree[3];
-    char ryan[] = "Ryan";
+
 
     // Define some local variables
     float a_flt = 190.68;
@@ -29,6 +29,7 @@ void main(void)
     long unsigned X= 123456;    // No prefix so number is assumed to be in decimal
     unsigned char myGrade='A';
     unsigned char initial='S';
+    unsigned char ryan[5] = "Ryan\n";
     //unsigned char your_name[14] = "Your Name Here";
                                     // What happens when you change the array length?
                                     // What should it be? Do you need null terminator /n ?
@@ -105,21 +106,21 @@ void main(void)
 
 void swDelay(char numLoops)
 {
-	// This function is a software delay. It performs
-	// useless loops to waste a bit of time
-	//
-	// Input: numLoops = number of delay loops to execute
-	// Output: none
-	//
-	// smj, ECE2049, 25 Aug 2013
+    // This function is a software delay. It performs
+    // useless loops to waste a bit of time
+    //
+    // Input: numLoops = number of delay loops to execute
+    // Output: none
+    //
+    // smj, ECE2049, 25 Aug 2013
 
-	volatile unsigned int i,j;	// volatile to prevent removal in optimization
-			                    // by compiler. Functionally this is useless code
+    volatile unsigned int i,j;  // volatile to prevent removal in optimization
+                                // by compiler. Functionally this is useless code
 
-	for (j=0; j<numLoops; j++)
+    for (j=0; j<numLoops; j++)
     {
-    	i = 50000 ;					// SW Delay
-   	    while (i > 0)				// could also have used while (i)
-	       i--;
+        i = 50000 ;                 // SW Delay
+        while (i > 0)               // could also have used while (i)
+           i--;
     }
 }
