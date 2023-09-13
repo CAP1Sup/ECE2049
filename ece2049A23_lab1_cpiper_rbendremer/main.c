@@ -22,7 +22,7 @@ uint8_t numList[50];  // Would prefer uint4_t for nums
 uint8_t seqLen = 0;
 
 // Current state
-enum State { WELCOME, PLAYBACK, INPUT, WINNER };
+enum State { WELCOME, PLAYBACK, INPUT };
 enum State currState = WELCOME;
 
 /**
@@ -170,13 +170,6 @@ int main(void) {
         if (currState == INPUT) {
             currState = PLAYBACK;
         }
-        break;
-      }
-      case WINNER: {
-        // Tell the user that they won :)
-        displayCenteredText("You won!");
-        __delay_cycles(LOSE_DELAY);
-        currState = WELCOME;
         break;
       }
     }
