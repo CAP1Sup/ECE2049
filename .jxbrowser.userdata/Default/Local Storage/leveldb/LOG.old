@@ -1,3 +1,2 @@
-2023/09/01-22:06:18.178 6534 Reusing MANIFEST C:\Users\xmanp\Documents\Github\ECE2049\.jxbrowser.userdata\Default\Local Storage\leveldb/MANIFEST-000001
-2023/09/01-22:06:18.178 6534 Recovering log #3
-2023/09/01-22:06:18.179 6534 Reusing old log C:\Users\xmanp\Documents\Github\ECE2049\.jxbrowser.userdata\Default\Local Storage\leveldb/000003.log 
+2023/09/13-11:14:36.396 4714 Creating DB C:\Users\xmanp\Documents\Github\ECE2049\.jxbrowser.userdata\Default\Local Storage\leveldb since it was missing.
+2023/09/13-11:14:36.410 4714 Reusing MANIFEST C:\Users\xmanp\Documents\Github\ECE2049\.jxbrowser.userdata\Default\Local Storage\leveldb/MANIFEST-000001
