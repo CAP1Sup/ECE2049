@@ -2,15 +2,20 @@
 #include <peripherals.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 #include <main.h>
 
-// Settings
-#define PLAYBACK_ON_DELAY 1000000
-#define PLAYBACK_OFF_DELAY 100000
+// Settings (delays are in CPU cycles)
+#define PLAYBACK_ON_DELAY 100000
+#define PLAYBACK_OFF_DELAY 10000
 #define LOSE_DELAY 1000000
 #define COUNTDOWN_DELAY 1000000
-#define MAX_BUTTON_CHECKS 10000
-#define KEY_DEBOUNCE_DELAY 100
+#define MAX_BUTTON_CHECKS 50000
+#define NUM_DISPLAY_CHECKS 10000
+#define KEY_DEBOUNCE_DELAY 10000
+#define NUM_DISPLAY_X_OFFSET 0
+#define NUM_DISPLAY_X_MOVE 25
+#define SPEEDUP_FACTOR 10 // Factor of reduction in time
 
 // Variables
 uint8_t numList[50];  // Would prefer uint4_t for nums
@@ -44,23 +49,26 @@ int main(void) {
         while (!(getKey() == '*'))
           ;
 
-        // Do a count down
-        uint8_t i;
-        for (i = 3; i > 0; i--) {
-          // Display the number
-          displayCenteredText(numToString(i));
+        // Reset the seq length
+        seqLen = 0;
 
-          // Wait for a second
-          __delay_cycles(COUNTDOWN_DELAY);
-        }
+        // Do a count down
+        displayCenteredText("3");
+        __delay_cycles(COUNTDOWN_DELAY);
+        displayCenteredText("2");
+        __delay_cycles(COUNTDOWN_DELAY);
+        displayCenteredText("1");
+        __delay_cycles(COUNTDOWN_DELAY);
 
         // Move to the playback state
         currState = PLAYBACK;
         break;
       }
       case PLAYBACK: {
+        displayCenteredTexts("Memorize", "the", "pattern");
+
         // Generate a random number to add to the sequence
-        numList[seqLen] = 1 << rand() % 4;
+        numList[seqLen] = rand() % 4;
 
         // Increment the sequence length
         seqLen++;
@@ -76,59 +84,99 @@ int main(void) {
         break;
       }
       case INPUT: {
+        displayCenteredTexts("Repeat", "the", "pattern");
+
         // Watch for input
         uint8_t currIndex = 0;
         uint32_t buttonChecks = 0;
 
         // Loop through the sequence
         for (currIndex = 0; currIndex < seqLen; currIndex++) {
-          // Get the pressed buttons
-          uint8_t pressed = getPressedButtons();
+          while (currState == INPUT) {
+              // Check if the game needs restarted
+              if (getKey() == '#') {
+                 currState = WELCOME;
+                 break;
+              }
 
-          // If a button is pressed
-          if (pressed) {
-            // Show the pressed number on the display
-            Graphics_clearDisplay(&g_sContext);
-            Graphics_drawStringCentered(&g_sContext, numToString(pressed),
-                                        AUTO_STRING_LENGTH, pressed * 15, 15,
-                                        TRANSPARENT_TEXT);
-            Graphics_flushBuffer(&g_sContext);
+              // Get the pressed buttons
+              uint8_t pressed = getPressedButtons();
 
-            // Check if the button pressed is the correct one
-            if (pressed == numList[currIndex]) {
-              // Reset the button checks
-              buttonChecks = 0;
+              // If a button is pressed
+              if (pressed) {
 
-              // Move to the next number
-              continue;
-            } else {
-              // Wrong button pressed
-              lose();
-              break;
-            }
+                // Show the pressed number on the display
+                Graphics_clearDisplay(&g_sContext);
+                switch(buttonToNum(pressed)) {
+                    case 1: {
+                        Graphics_drawStringCentered(&g_sContext, "1", AUTO_STRING_LENGTH,
+                                                    NUM_DISPLAY_X_OFFSET, 15, TRANSPARENT_TEXT);
+                        break;
+                    }
+                    case 2: {
+                        Graphics_drawStringCentered(&g_sContext, "2", AUTO_STRING_LENGTH,
+                                                    NUM_DISPLAY_X_OFFSET + NUM_DISPLAY_X_MOVE, 15, TRANSPARENT_TEXT);
+                        break;
+                    }
+                    case 3: {
+                        Graphics_drawStringCentered(&g_sContext, "3", AUTO_STRING_LENGTH,
+                                                    NUM_DISPLAY_X_OFFSET + NUM_DISPLAY_X_MOVE*2, 15, TRANSPARENT_TEXT);
+                        break;
+                    }
+                    case 4: {
+                        Graphics_drawStringCentered(&g_sContext, "4", AUTO_STRING_LENGTH,
+                                                    NUM_DISPLAY_X_OFFSET + NUM_DISPLAY_X_MOVE*3, 15, TRANSPARENT_TEXT);
+                        break;
+                    }
+                }
+                Graphics_flushBuffer(&g_sContext);
 
-            // Delay (to prevent debouncing), then to allow user to release button
-            __delay_cycles(KEY_DEBOUNCE_DELAY);
-            while (getPressedButtons());
-            __delay_cycles(KEY_DEBOUNCE_DELAY);
+                // Check if the button pressed is the correct one
+                if (pressed == (1 << numList[currIndex])) {
+                  // Reset the button checks
+                  buttonChecks = 0;
+
+                  // Delay to prevent button debouncing, then wait for the button to be released
+                  __delay_cycles(KEY_DEBOUNCE_DELAY);
+                  while (getPressedButtons());
+                  __delay_cycles(KEY_DEBOUNCE_DELAY);
+
+                  // Move to the next number
+                  break;
+                } else {
+                  // Wrong button pressed
+                  lose();
+                  break;
+                }
+              }
+
+              // Check if the user took too long
+              if (buttonChecks > (MAX_BUTTON_CHECKS - ((MAX_BUTTON_CHECKS/SPEEDUP_FACTOR) * (seqLen - 1)))) {
+                // Time up
+                lose();
+                break;
+              }
+              // Clear the display after a specified count
+              //if (buttonChecks > NUM_DISPLAY_CHECKS) {
+              //    clearDisplay();
+              //}
+
+              // Increment the button checks
+              buttonChecks++;
           }
+        }
 
-          // Check if the user took too long
-          if (buttonChecks > MAX_BUTTON_CHECKS) {
-            // Time up
-            lose();
-            break;
-          }
-
-          // Increment the button checks
-          buttonChecks++;
+        // The user was able to repeat the pattern successfully, move back to displaying the numbers
+        if (currState == INPUT) {
+            currState = PLAYBACK;
         }
         break;
       }
       case WINNER: {
         // Tell the user that they won :)
         displayCenteredText("You won!");
-        waitForRestart();
+        __delay_cycles(LOSE_DELAY);
+        currState = WELCOME;
         break;
       }
     }
@@ -154,10 +202,15 @@ void initButtons() {
   P3DIR &= ~(BIT6);
   P2DIR &= ~(BIT2);
 
-  // Enable pull up resistors
+  // Set internal resistors to pull-ups
+  P7OUT |= (BIT0 | BIT4);
+  P3OUT |= BIT6;
+  P2OUT |= BIT2;
+
+  // Enable pull-up/down resistors
   P7REN |= (BIT0 | BIT4);
-  P3REN |= (BIT6);
-  P2REN |= (BIT2);
+  P3REN |= BIT6;
+  P2REN |= BIT2;
 }
 
 /**
@@ -184,12 +237,12 @@ void initBuzzer() {
  * @param num The number to display (0-3)
  */
 void showNum(uint8_t num) {
-  setLeds(1 << num);
+  setLeds(0b1000 >> num); // Led numbering is reversed :(
   buzzerSound(num);
-  __delay_cycles(PLAYBACK_ON_DELAY);
+  delayCycles(PLAYBACK_ON_DELAY - ((PLAYBACK_ON_DELAY/SPEEDUP_FACTOR) * (seqLen - 1)));
   setLeds(0);
   BuzzerOff();
-  __delay_cycles(PLAYBACK_OFF_DELAY);
+  delayCycles(PLAYBACK_OFF_DELAY - ((PLAYBACK_OFF_DELAY/SPEEDUP_FACTOR) * (seqLen - 1)));
 }
 
 /**
@@ -236,19 +289,11 @@ uint8_t getPressedButtons() {
 }
 
 /**
- * @brief Waits for the user to press the * key, then restart the game
- *
+ * @brief Clears the screen
  */
-void waitForRestart() {
-  // Wait for the * key to be pressed to restart
-  while (!(getKey() == '*'))
-    ;
-
-  // Reset the sequence length
-  seqLen = 0;
-
-  // Move to the playback state
-  currState = PLAYBACK;
+void clearDisplay() {
+    Graphics_clearDisplay(&g_sContext);
+    Graphics_flushBuffer(&g_sContext);
 }
 
 /**
@@ -264,10 +309,30 @@ void displayCenteredText(uint8_t* string) {
 }
 
 /**
+ * @brief Displays the given strings in the center of the screen
+ *
+ * @param string1 The first string to display
+ * @param string2 The second string to display
+ * @param string3 The third string to display
+ */
+void displayCenteredTexts(uint8_t* string1, uint8_t* string2, uint8_t* string3) {
+  Graphics_clearDisplay(&g_sContext);
+  Graphics_drawStringCentered(&g_sContext, string1, AUTO_STRING_LENGTH, 48, 15,
+                              TRANSPARENT_TEXT);
+  Graphics_drawStringCentered(&g_sContext, string2, AUTO_STRING_LENGTH, 48, 30,
+                              TRANSPARENT_TEXT);
+  Graphics_drawStringCentered(&g_sContext, string3, AUTO_STRING_LENGTH, 48, 45,
+                              TRANSPARENT_TEXT);
+  Graphics_flushBuffer(&g_sContext);
+}
+
+/**
  * @brief Makes a losing sound and moves to the welcome screen
  *
  */
 void lose() {
+  // Display the losing message
+  displayCenteredText("You lose!");
   buzzerSound(0);
   __delay_cycles(LOSE_DELAY);
   BuzzerOff();
@@ -277,14 +342,25 @@ void lose() {
 }
 
 /**
- * @brief Converts the given number to a string
+ * @brief Converts the given buttons pressed to a number. Assumes that only one button is pressed.
  *
- * @param num Number to convert
- * @return uint8_t* String pointer
+ * @param buttonStates Button states
+ * @return uint8_t Rightmost button number pressed
  */
-uint8_t* numToString(uint8_t num) {
-  uint8_t* string = malloc(sizeof(uint8_t) * 2);
-  string[0] = '0' + num;
-  string[1] = '\0';
-  return string;
+uint8_t buttonToNum(uint8_t buttonStates) {
+  uint8_t rightMostPosition = 0;
+  while (buttonStates != 0) {
+      buttonStates >>= 1;
+      rightMostPosition++;
+  }
+  return rightMostPosition;
+}
+
+void delayCycles(uint32_t cycles) {
+    // Divide by 2
+    // One op for compare, one for subtraction
+    cycles /= 2;
+    while (cycles) {
+        cycles--;
+    }
 }
