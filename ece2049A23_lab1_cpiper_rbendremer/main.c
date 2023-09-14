@@ -349,6 +349,11 @@ uint8_t buttonToNum(uint8_t buttonStates) {
   return rightMostPosition;
 }
 
+/**
+ * @brief Delays the CPU by the given number of cycles
+ *
+ * @param cycles The number of cycles to delay by
+ */
 void delayCycles(uint32_t cycles) {
     // Divide by 2
     // One op for compare, one for subtraction
