@@ -30,39 +30,38 @@
 
 // Note/LED deadtime
 // Allows the user to see the difference between notes
-#define NOTE_DEADTIME 100 // ms
-#define LAST_STRIKE_DURATION 1000 // ms
-#define LAST_STRIKE_NOTE1 B // Hz
-#define LAST_STRIKE_NOTE2 Bb // Hz
-#define LAST_STRIKE_NOTE3 A // Hz
+#define NOTE_DEADTIME 100          // ms
+#define LAST_STRIKE_DURATION 1000  // ms
+#define LAST_STRIKE_NOTE1 B        // Hz
+#define LAST_STRIKE_NOTE2 Bb       // Hz
+#define LAST_STRIKE_NOTE3 A        // Hz
 
 // Declare globals here
-#define NUM_NOTES 30
+#define NUM_NOTES 28
 #define SONGS 3
 // in Hz
 uint16_t notes[SONGS][NUM_NOTES] = {
-    {A, Bb, B,  C, Cs, D, Eb, E,  F, Fs, G,   Ab, A_H, A, Bb,
-     B, C,  Cs, D, Eb, E, F,  Fs, G, Ab, A_H, A,  Bb,  B, C},
+    {C, C, G, G, A, A, G, F, F, E, E, D, D, C,
+     C, C, G, G, A, A, G, F, F, E, E, D, D, C},
 
-    {A, Bb, B,  C, Cs, D, Eb, E,  F, Fs, G,   Ab, A_H, A, Bb,
-     B, C,  Cs, D, Eb, E, F,  Fs, G, Ab, A_H, A,  Bb,  B, C},
+    {A,  Bb, B, C,  Cs, D,  Eb, E, F,  Fs, G,  Ab,  A_H, A,
+     Bb, B,  C, Cs, D,  Eb, E,  F, Fs, G,  Ab, A_H, A,   Bb},
 
-    {A, Bb, B,  C, Cs, D, Eb, E,  F, Fs, G,   Ab, A_H, A, Bb,
-     B, C,  Cs, D, Eb, E, F,  Fs, G, Ab, A_H, A,  Bb,  B, C}};
+    {A,  Bb, B, C,  Cs, D,  Eb, E, F,  Fs, G,  Ab,  A_H, A,
+     Bb, B,  C, Cs, D,  Eb, E,  F, Fs, G,  Ab, A_H, A,   Bb}};
 
 // in ms
 uint16_t durations[SONGS][NUM_NOTES] = {
-    {2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-     2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-     2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000},
+    {1000, 1000, 1000, 1000, 1000, 1000, 2000, 1000, 1000, 1000,
+     1000, 1000, 1000, 2000, 1000, 1000, 1000, 1000, 1000, 1000,
+     2000, 1000, 1000, 1000, 1000, 1000, 1000, 2000},
 
     {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
      1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
-     1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000},
+     1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000},
 
-    {500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
-     500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
-     500, 500, 500, 500, 500, 500, 500, 500, 500, 500}};
+    {500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500}};
 
 // Counter ticks every 0.5 ms
 // Overflow every (0.5 ms * (2^32 - 1)) = 2,147,483.6475 seconds
@@ -107,8 +106,8 @@ void main(void) {
           ;
 
         // Ask the user to select a song
-        displayCenteredTexts("Select a song", "1: Song 1", "2: Song 2",
-                             "3: Song 3");
+        displayCenteredTexts("Select a song", "1: Twinkle Little Star",
+                             "2: Song 2", "3: Song 3");
 
         // Wait for the user to select a song
         while (1) {
@@ -165,7 +164,6 @@ void main(void) {
       }
 
       case PLAYING: {
-
         // Reset global variables
         strikes = 0;
         prevPressedButtons = 0;
@@ -184,8 +182,8 @@ void main(void) {
         while (currentNote < NUM_NOTES) {
           // Check if previous note is done playing
           // Uses first note's duration for the first note's press period
-          if (getTimerA2Millis() > getPrevNoteDuration(currentNote) + NOTE_DEADTIME) {
-
+          if (getTimerA2Millis() >
+              getPrevNoteDuration(currentNote) + NOTE_DEADTIME) {
             // Turn off buzzer and note display LEDs
             BuzzerOff();
             setLeds(0b0000);
@@ -204,12 +202,12 @@ void main(void) {
               if (giveStrike()) {
                 break;
               }
-            }
-            else {
+            } else {
               // Play the note
               playNote(notes[selectedSong][currentNote]);
 
-              // Make sure that the user hasn't double pressed the correct button
+              // Make sure that the user hasn't double pressed the correct
+              // button
               if (!doublePressed) {
                 takeAwayStrike();
               }
@@ -233,7 +231,8 @@ void main(void) {
             // Only update if buttons have changed
             if (pressed != prevPressedButtons) {
               // Check if the user pressed the correct button
-              if (pressed == freqToNoteBitGroup(notes[selectedSong][currentNote])) {
+              if (pressed ==
+                  freqToNoteBitGroup(notes[selectedSong][currentNote])) {
                 // User pressed the correct button
                 // Check if the correct button was already pressed
                 if (correctButtonPressed) {
@@ -245,8 +244,7 @@ void main(void) {
 
                   // Note that the user double pressed the correct button
                   doublePressed = true;
-                }
-                else {
+                } else {
                   // Note that the correct button has been pushed
                   correctButtonPressed = true;
                 }
@@ -283,7 +281,8 @@ void main(void) {
       }
       case LOSER: {
         // Tell the user that they lost :(
-        displayCenteredTexts("You lost :(", "Rock on and", "try again!", "Press #");
+        displayCenteredTexts("You lost :(", "Rock on and", "try again!",
+                             "Press #");
 
         // Wait for a button press to restart the game
         while (getKey() != '#')
@@ -309,7 +308,8 @@ void main(void) {
 }
 
 /**
- * @brief Returns the duration of the previous note. Will return note 0's duration if the current note is 0
+ * @brief Returns the duration of the previous note. Will return note 0's
+ * duration if the current note is 0
  *
  * @param currentNote The current note index
  * @return uint32_t The duration of the previous note
@@ -486,7 +486,8 @@ void displayUserLeds(uint8_t leds) {
 }
 
 /**
- * @brief Resets the note timer and lights the LEDs on the board corresponding to the given frequency
+ * @brief Resets the note timer and lights the LEDs on the board corresponding
+ * to the given frequency
  *
  */
 void showNote(uint16_t freq) {
