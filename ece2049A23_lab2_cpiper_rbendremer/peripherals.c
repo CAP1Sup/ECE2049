@@ -58,7 +58,7 @@ void setLeds(unsigned char state)
     if (state & BIT0)
         mask |= BIT4;   // Right most LED P6.4
     if (state & BIT1)
-        mask |= BIT3;   // next most right LED P.3
+        mask |= BIT3;   // next most right LED P6.3
     if (state & BIT2)
         mask |= BIT1;   // third most left LED P6.1
     if (state & BIT3)
@@ -192,7 +192,7 @@ unsigned char getKey(void)
 void configDisplay(void)
 {
     // Enable use of external clock crystals
-     P5SEL |= (BIT5|BIT4|BIT3|BIT2);
+    P5SEL |= (BIT5|BIT4|BIT3|BIT2);
 
 	// Initialize the display peripheral
 	Sharp96x96_Init();
