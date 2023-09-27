@@ -106,7 +106,7 @@ void main(void) {
           ;
 
         // Ask the user to select a song
-        displayCenteredTexts("Select a song", "1: Twinkle Little Star",
+        displayCenteredTexts("Select a song", "1: Twinkle",
                              "2: Song 2", "3: Song 3");
 
         // Wait for the user to select a song
