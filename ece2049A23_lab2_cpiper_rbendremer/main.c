@@ -38,21 +38,38 @@
 
 // Declare globals here
 #define NUM_NOTES 30
+#define SONGS 3
 // in Hz
-uint16_t notes[NUM_NOTES] = {A, Bb, B,   C, Cs, D,   Eb, E,  F, Fs,
-                             G, Ab, A_H, A, Bb, B,   C,  Cs, D, Eb,
-                             E, F,  Fs,  G, Ab, A_H, A,  Bb, B, C};
+uint16_t notes[SONGS][NUM_NOTES] = {
+    {A, Bb, B,  C, Cs, D, Eb, E,  F, Fs, G,   Ab, A_H, A, Bb,
+     B, C,  Cs, D, Eb, E, F,  Fs, G, Ab, A_H, A,  Bb,  B, C},
+
+    {A, Bb, B,  C, Cs, D, Eb, E,  F, Fs, G,   Ab, A_H, A, Bb,
+     B, C,  Cs, D, Eb, E, F,  Fs, G, Ab, A_H, A,  Bb,  B, C},
+
+    {A, Bb, B,  C, Cs, D, Eb, E,  F, Fs, G,   Ab, A_H, A, Bb,
+     B, C,  Cs, D, Eb, E, F,  Fs, G, Ab, A_H, A,  Bb,  B, C}};
 
 // in ms
-uint16_t durations[NUM_NOTES] = {2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-                 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-                 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000};
+uint16_t durations[SONGS][NUM_NOTES] = {
+    {2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+     2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+     2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000},
+
+    {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+     1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+     1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000},
+
+    {500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500}};
 
 // Counter ticks every 0.5 ms
 // Overflow every (0.5 ms * (2^32 - 1)) = 2,147,483.6475 seconds
 uint32_t A2Count = 0;
 
 // Game status info
+uint8_t selectedSong = 0;
 uint8_t strikes = 0;
 uint8_t prevPressedButtons = 0;
 bool doublePressed = false;
@@ -88,6 +105,25 @@ void main(void) {
         // Wait for a button press to start the game
         while (getKey() != '*')
           ;
+
+        // Ask the user to select a song
+        displayCenteredTexts("Select a song", "1: Song 1", "2: Song 2",
+                             "3: Song 3");
+
+        // Wait for the user to select a song
+        while (1) {
+          uint8_t key = getKey();
+          if (key == '1') {
+            selectedSong = 0;
+            break;
+          } else if (key == '2') {
+            selectedSong = 1;
+            break;
+          } else if (key == '3') {
+            selectedSong = 2;
+            break;
+          }
+        }
 
         // Reset the timer
         resetTimerA2Count();
@@ -142,7 +178,7 @@ void main(void) {
         uint8_t currentNote = 0;
 
         // Show the user the first note
-        showNote(notes[currentNote]);
+        showNote(notes[selectedSong][currentNote]);
 
         // Loop through the sequence
         while (currentNote < NUM_NOTES) {
@@ -171,7 +207,7 @@ void main(void) {
             }
             else {
               // Play the note
-              playNote(notes[currentNote]);
+              playNote(notes[selectedSong][currentNote]);
 
               // Make sure that the user hasn't double pressed the correct button
               if (!doublePressed) {
@@ -186,7 +222,7 @@ void main(void) {
             currentNote++;
 
             // Show the next note
-            showNote(notes[currentNote]);
+            showNote(notes[selectedSong][currentNote]);
           }
 
           // Get the state of the input buttons
@@ -197,7 +233,7 @@ void main(void) {
             // Only update if buttons have changed
             if (pressed != prevPressedButtons) {
               // Check if the user pressed the correct button
-              if (pressed == freqToNoteBitGroup(notes[currentNote])) {
+              if (pressed == freqToNoteBitGroup(notes[selectedSong][currentNote])) {
                 // User pressed the correct button
                 // Check if the correct button was already pressed
                 if (correctButtonPressed) {
@@ -280,9 +316,9 @@ void main(void) {
  */
 uint32_t getPrevNoteDuration(uint8_t currentNote) {
   if (currentNote == 0) {
-    return durations[0];
+    return durations[selectedSong][0];
   }
-  return durations[currentNote - 1];
+  return durations[selectedSong][currentNote - 1];
 }
 
 /**
