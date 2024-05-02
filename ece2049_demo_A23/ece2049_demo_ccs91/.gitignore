@@ -1,9 +1,0 @@
-*~
-\#*#
-*.o
-*.obj
-*.out
-
-Debug/*
-
-/Debug/
